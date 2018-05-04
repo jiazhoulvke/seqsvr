@@ -23,6 +23,7 @@ var (
 	defaultMaker     *Maker
 	makers           map[string]*Maker
 	mutex            sync.RWMutex
+	mid              int64
 )
 
 func init() {
@@ -32,27 +33,22 @@ func init() {
 
 //Maker unique id 生成器
 type Maker struct {
-	curTime   int64
-	count     int64
-	machineID int64
-	mutex     sync.RWMutex
-}
-
-//SetMachineID 设置机器ID
-func (s *Maker) SetMachineID(machineID int64) error {
-	if machineID < 1 {
-		return fmt.Errorf("机器ID必须为大于0的正整数")
-	}
-	if machineID > MaxMachineNumber {
-		return fmt.Errorf("机器ID不能大于%d", MaxMachineNumber)
-	}
-	s.machineID = machineID
-	return nil
+	curTime int64
+	count   int64
+	// machineID int64
+	mutex sync.RWMutex
 }
 
 //SetMachineID 设置机器ID
 func SetMachineID(machineID int64) error {
-	return defaultMaker.SetMachineID(machineID)
+	// if machineID < 1 {
+	// return fmt.Errorf("机器ID必须为大于0的正整数")
+	// }
+	if machineID > MaxMachineNumber {
+		return fmt.Errorf("机器ID不能大于%d", MaxMachineNumber)
+	}
+	mid = machineID
+	return nil
 }
 
 //SequenceID 获取一个序列号
@@ -68,9 +64,8 @@ func NewMaker(key string) *Maker {
 		return makers[key]
 	}
 	u := Maker{
-		curTime:   time.Now().Unix(),
-		count:     1,
-		machineID: 1,
+		curTime: time.Now().Unix(),
+		count:   1,
 	}
 	makers[key] = &u
 	return &u
@@ -80,14 +75,19 @@ func NewMaker(key string) *Maker {
 func (s *Maker) SequenceID() (sequenceID int64) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
+	now := time.Now().Unix()
 	if s.count > Max {
-		for now := time.Now().Unix(); s.curTime == now; now = time.Now().Unix() {
+		for ; s.curTime == now; now = time.Now().Unix() {
 			s.curTime = now
 			time.Sleep(time.Duration(100) * time.Millisecond)
 		}
 		s.count = 1
 	}
-	sequenceID = s.curTime<<32 + s.machineID<<23 + s.count
+	if s.curTime != now {
+		s.curTime = now
+		s.count = 1
+	}
+	sequenceID = s.curTime<<32 + mid<<23 + s.count
 	s.count++
 	return
 }

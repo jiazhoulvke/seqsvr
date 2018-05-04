@@ -9,21 +9,22 @@ import (
 func TestSequenceID(t *testing.T) {
 	Convey("测试序列号", t, func() {
 		var err error
-		err = SetMachineID(0)
-		So(err, ShouldNotBeNil)
 		err = SetMachineID(9999999)
 		So(err, ShouldNotBeNil)
-		err = SetMachineID(1)
+		err = SetMachineID(0)
+		So(err, ShouldBeNil)
+		err = SetMachineID(0)
 		So(err, ShouldBeNil)
 		seqid := SequenceID()
-		t.Logf("十进制序列号:%d\n", seqid)
-		t.Logf("十六进制序列号:%X\n", seqid)
 		So(seqid, ShouldNotEqual, 0)
 		var i int64
-		maker := NewMaker("default")
-		for i = 0; i < Max; i++ {
-			maker.SequenceID()
+		maker := NewMaker("test")
+		m := make(map[int64]bool)
+		var idNum int64 = 99999999
+		for i = 0; i < idNum; i++ {
+			m[maker.SequenceID()] = true
 		}
+		So(len(m), ShouldEqual, idNum)
 	})
 }
 
