@@ -18,9 +18,9 @@ func TestSequenceID(t *testing.T) {
 		seqid := SequenceID()
 		So(seqid, ShouldNotEqual, 0)
 		var i int64
-		maker := NewMaker("test")
+		maker := NewMaker()
 		m := make(map[int64]bool)
-		var idNum int64 = 99999999
+		var idNum int64 = 1_000_000
 		for i = 0; i < idNum; i++ {
 			m[maker.SequenceID()] = true
 		}
@@ -29,7 +29,7 @@ func TestSequenceID(t *testing.T) {
 }
 
 func BenchmarkSequenceID(b *testing.B) {
-	sm := NewMaker("test")
+	sm := NewMaker()
 	for i := 0; i < b.N; i++ {
 		sm.SequenceID()
 	}
